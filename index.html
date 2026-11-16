@@ -1332,8 +1332,163 @@ function effectFilm(root) {
   });
 }
 
-const effects = [effectBounce, effectParticles, effectRipple, effectTilt, effectMosaic, effectMagnifier, effectKaleidoscope, effectFrost, effectOrbit, effectPixelate, effectGlitch, effectAscii, effectHalftone, effectWarp, effectSwirl, effectSpotlight, effectShatter, effectCrt, effectWave, effectCube, effectGravity, effectSnow, effectTrail, effectTunnel, effectHologram, effectBlackHole, effectGlobe, effectMatrix, effectLiquid, effectNeon, effectSynthwave, effectReflection, effectPopArt, effectThermal, effectPrism, effectFireworks, effectGlass, effectBubbles, effectCity, effectFilm];
-const names = ['bounce','particles','ripple','tilt','mosaic','magnifier','kaleidoscope','frost','orbit','pixelate','glitch','ascii','halftone','warp','swirl','spotlight','shatter','CRT','wave','cube','gravity','snow globe','trail','tunnel','hologram','black hole','globe','matrix','liquid','neon','synthwave','reflection','pop art','thermal','prism','fireworks','stained glass','bubbles','city','film'];
+function effectCarousel(root) {
+  root.style.background = 'radial-gradient(circle at 50% 40%,#1c2130 0%,#07080c 75%)';
+  const o = mkCanvas(root), m = track(root), ctx = o.ctx, n = 8, ST = 16;
+  let src = null, a = 0, sp = 0.006, ex = 1;
+  withImg(s => { src = s; });
+  loop(() => {
+    const { W, H } = o; ctx.clearRect(0, 0, W, H);
+    if (!src) return;
+    sp += ((m.down ? 0.02 : m.on ? (m.x / W - 0.5) * 0.05 : 0.006) - sp) * 0.05; a += sp; ex += ((m.down ? 1.4 : 1) - ex) * 0.06;
+    const w = Math.min(W * 0.34, H * 0.4), Rr = w * 1.3 * ex, D = Rr * 3.2, yc = H * 0.42;
+    const tiles = Array.from({ length: n }, (_, k) => { const an = a + k * 6.283 / n; return { an, z: Math.cos(an) }; }).sort((p, q) => p.z - q.z);
+    const strip = (an, z, i, mirror) => {
+      const u0 = i / ST, u1 = (i + 1) / ST, tx = Math.cos(an), tz = -Math.sin(an), cx = Rr * Math.sin(an), cz = Rr * Math.cos(an);
+      const p0 = cz + tz * (u0 - 0.5) * w, p1 = cz + tz * (u1 - 0.5) * w, s0 = D / (D - p0), s1 = D / (D - p1);
+      const x0 = W / 2 + (cx + tx * (u0 - 0.5) * w) * s0, x1 = W / 2 + (cx + tx * (u1 - 0.5) * w) * s1, hh = w * (s0 + s1) / 2, yF = yc + hh / 2 + w * 0.04;
+      ctx.save();
+      if (mirror) { ctx.translate(0, yF * 2); ctx.scale(1, -1); }
+      ctx.drawImage(src, u0 * 512, 0, 512 / ST, 512, Math.min(x0, x1), yc - hh / 2, Math.abs(x1 - x0) + 0.7, hh);
+      ctx.restore();
+    };
+    for (const mirror of [true, false]) for (const { an, z } of tiles) {
+      for (let i = 0; i < ST; i++) strip(an, z, i, mirror);
+      const sc = D / (D - Rr * Math.cos(an)), hh = w * sc, ww = Math.abs(Math.cos(an)) * w * sc + 2, gp = w * 0.04, al = (0.35 + 0.65 * (z + 1) / 2) * (mirror ? 0.18 : 1);
+      ctx.fillStyle = `rgba(8,9,13,${1 - al})`; ctx.fillRect(W / 2 + Rr * Math.sin(an) * sc - ww / 2, mirror ? yc + hh / 2 + 2 * gp : yc - hh / 2, ww, hh);
+    }
+  });
+}
+
+function effectNightVision(root) {
+  root.style.background = '#000';
+  const o = mkCanvas(root), m = track(root), ctx = o.ctx;
+  let gr = null, px = 0, py = 0, zm = 1, nz, scan, nzp, scp;
+  nz = document.createElement('canvas'); nz.width = nz.height = 160;
+  { const x = nz.getContext('2d'), id = x.createImageData(160, 160); for (let i = 0; i < 160 * 160; i++) { const v = Math.random() * 255; id.data[i * 4] = v * 0.4; id.data[i * 4 + 1] = v; id.data[i * 4 + 2] = v * 0.5; id.data[i * 4 + 3] = 255; } x.putImageData(id, 0, 0); }
+  scan = document.createElement('canvas'); scan.width = 1; scan.height = 4;
+  { const x = scan.getContext('2d'); x.fillStyle = 'rgba(0,25,0,0.35)'; x.fillRect(0, 0, 1, 2); }
+  nzp = ctx.createPattern(nz, 'repeat'); scp = ctx.createPattern(scan, 'repeat');
+  withImg(s => {
+    gr = document.createElement('canvas'); gr.width = gr.height = 512;
+    const x = gr.getContext('2d'), im = sampleImg(s, 512), id = x.createImageData(512, 512);
+    for (let i = 0; i < 512 * 512; i++) { const l = Math.min(1, lum(im.d, i * 4) * 1.3 + 0.05); id.data[i * 4] = l * 70; id.data[i * 4 + 1] = l * 255; id.data[i * 4 + 2] = l * 90; id.data[i * 4 + 3] = 255; }
+    x.putImageData(id, 0, 0);
+  });
+  loop(t => {
+    const { W, H } = o, S = Math.min(W, H) * 0.9, ix = (W - S) / 2, iy = (H - S) / 2, R = Math.min(W, H) * 0.36;
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    if (!gr) return;
+    if (!px) { px = W / 2; py = H / 2; }
+    px += ((m.on ? m.x : W / 2 + Math.sin(t / 1700) * S * 0.25) - px) * 0.12; py += ((m.on ? m.y : H / 2 + Math.cos(t / 2300) * S * 0.2) - py) * 0.12; zm += ((m.down ? 2 : 1) - zm) * 0.1;
+    ctx.globalAlpha = 0.07; ctx.drawImage(gr, ix, iy, S, S); ctx.globalAlpha = 1;
+    ctx.save(); circle(ctx, px, py, R); ctx.clip();
+    ctx.save(); ctx.translate(px, py); ctx.scale(zm, zm); ctx.translate(-px, -py); ctx.globalAlpha = 0.9 + Math.random() * 0.1; ctx.drawImage(gr, ix, iy, S, S); ctx.restore();
+    ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = 0.3; ctx.translate(Math.random() * 160, Math.random() * 160); ctx.fillStyle = nzp; ctx.fillRect(-160, -160, W + 320, H + 320); ctx.restore();
+    ctx.fillStyle = scp; ctx.fillRect(px - R, py - R, R * 2, R * 2);
+    const v = ctx.createRadialGradient(px, py, R * 0.5, px, py, R); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.75)'); ctx.fillStyle = v; ctx.fillRect(px - R, py - R, R * 2, R * 2);
+    ctx.restore();
+    ctx.strokeStyle = '#7fff9a'; ctx.lineWidth = 2; circle(ctx, px, py, R); ctx.stroke();
+    ctx.lineWidth = 1; ctx.beginPath();
+    for (let i = 0; i < 24; i++) { const an = i * 0.2618, r1 = R * (i % 6 ? 0.95 : 0.9); ctx.moveTo(px + Math.cos(an) * r1, py + Math.sin(an) * r1); ctx.lineTo(px + Math.cos(an) * R, py + Math.sin(an) * R); }
+    ctx.moveTo(px - R * 0.12, py); ctx.lineTo(px + R * 0.12, py); ctx.moveTo(px, py - R * 0.12); ctx.lineTo(px, py + R * 0.12); ctx.stroke();
+    ctx.fillStyle = '#7fff9a'; ctx.font = Math.max(11, R * 0.06) + 'px monospace'; ctx.textAlign = 'center';
+    ctx.fillText('IR ON   ZOOM ' + zm.toFixed(1) + 'x', px, py + R + Math.max(16, R * 0.1));
+    if ((t / 500 | 0) % 2) { circle(ctx, px - R * 0.8, py - R * 0.85, 4); ctx.fill(); }
+  });
+}
+
+function effectPixelSort(root) {
+  root.style.background = '#0b0c10';
+  const N = 200, { ctx, m } = sq(root, N, false, 0.92);
+  withImg(s => {
+    const im = sampleImg(s, N), base = new Uint32Array(im.d.buffer), L = new Float32Array(N * N), out = ctx.createImageData(N, N), dst = new Uint32Array(out.data.buffer), amt = new Float32Array(N), dirty = new Uint8Array(N), idx = [];
+    for (let i = 0; i < N * N; i++) L[i] = lum(im.d, i * 4);
+    dst.set(base);
+    let px = 0.5, py = 0.5;
+    loop(t => {
+      px += ((m.on ? m.x : 0.5 + Math.sin(t / 1400) * 0.35) - px) * 0.15; py += ((m.on ? m.y : 0.5 + Math.cos(t / 1900) * 0.3) - py) * 0.15;
+      const cx = px * N, cy = py * N, R = m.down ? 200 : 26;
+      for (let y = 0; y < N; y++) {
+        const tgt = Math.exp(-(((y - cy) / R) ** 2)), a0 = amt[y], row = y * N;
+        amt[y] += (tgt - a0) * (tgt > a0 ? 0.25 : 0.03);
+        if (amt[y] < 0.02) { if (dirty[y]) { dst.set(base.subarray(row, row + N), row); dirty[y] = 0; } continue; }
+        dirty[y] = 1;
+        const w = Math.max(2, Math.min(N, Math.floor(amt[y] * (m.down ? N : N * 0.85)))), s0 = Math.max(0, Math.min(N - w, Math.round(cx - w / 2)));
+        idx.length = w; for (let k = 0; k < w; k++) idx[k] = s0 + k;
+        idx.sort((p, q) => L[row + p] - L[row + q]);
+        dst.set(base.subarray(row, row + N), row);
+        for (let k = 0; k < w; k++) dst[row + s0 + k] = base[row + idx[k]];
+      }
+      ctx.putImageData(out, 0, 0);
+    });
+  });
+}
+
+function effectPuzzle(root) {
+  root.style.background = '#0b0c10';
+  const o = mkCanvas(root), m = track(root), ctx = o.ctx, cell = Array.from({ length: 16 }, (_, i) => i);
+  let src = null, blank = 15, anim = null, hist = [], phase = 0, wait = 1500, left = 0, prev = -1, was = false;
+  withImg(s => { src = s; });
+  const nb = b => [b - 4, b + 4, b % 4 ? b - 1 : -1, b % 4 < 3 ? b + 1 : -1].filter(x => x >= 0 && x < 16);
+  const move = (from, t, rec) => { const b0 = blank; anim = { from, to: b0, t0: t }; cell[b0] = cell[from]; cell[from] = 15; if (rec) hist.push(b0); prev = b0; blank = from; };
+  loop(t => {
+    const { W, H } = o, B = Math.min(W, H) * 0.8, ts = B / 4, x0 = (W - B) / 2, y0 = (H - B) / 2;
+    ctx.fillStyle = '#0b0c10'; ctx.fillRect(0, 0, W, H);
+    if (!src) return;
+    if (anim && t - anim.t0 > 180) anim = null;
+    const ci = Math.floor((m.x - x0) / ts), ri = Math.floor((m.y - y0) / ts), hov = m.on && ci >= 0 && ci < 4 && ri >= 0 && ri < 4 ? ri * 4 + ci : -1;
+    if (!anim) {
+      if (m.down && !was && hov >= 0 && nb(blank).includes(hov)) move(hov, t, true);
+      else if (phase === 0 && t >= wait) { phase = 1; left = 22; }
+      else if (phase === 1) { if (left-- > 0) { const c = nb(blank).filter(x => x !== prev); move(c[Math.random() * c.length | 0], t, true); } else { phase = 2; wait = t + 900; } }
+      else if (phase === 2 && t >= wait) phase = 3;
+      else if (phase === 3) { if (hist.length) move(hist.pop(), t, false); else { phase = 0; wait = t + 2500; } }
+    }
+    was = m.down;
+    const e = anim ? Math.min(1, (t - anim.t0) / 180) : 1, ease = e * e * (3 - 2 * e), done = phase === 0 && !anim && !hist.length;
+    for (let i = 0; i < 16; i++) {
+      const k = cell[i]; if (k === 15 && !done) continue;
+      let cx = i % 4, cy = i >> 2;
+      if (anim && i === anim.to) { const fx = anim.from % 4, fy = anim.from >> 2; cx = fx + (cx - fx) * ease; cy = fy + (cy - fy) * ease; }
+      ctx.drawImage(src, (k % 4) * 128, (k >> 2) * 128, 128, 128, x0 + cx * ts + 1.5, y0 + cy * ts + 1.5, ts - 3, ts - 3);
+      if (i === hov && nb(blank).includes(i)) { ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 2; ctx.strokeRect(x0 + cx * ts + 2, y0 + cy * ts + 2, ts - 4, ts - 4); }
+    }
+  });
+}
+
+function effectPainter(root) {
+  root.style.background = '#14110d';
+  const o = mkCanvas(root), m = track(root), ctx = o.ctx, n = 128, LY = [[16, 30, 700, 8], [8, 18, 2600, 24], [4, 10, 6500, 55]];
+  let C = null, A = null, lw = 0, lh = 0, layer = 0, cnt = 0, hold = 0, fade = 0;
+  withImg(s => {
+    const d = sampleImg(s, n).d, g = new Float32Array(n * n); C = []; A = new Float32Array(n * n);
+    for (let i = 0; i < n * n; i++) { g[i] = lum(d, i * 4); C.push([d[i * 4], d[i * 4 + 1], d[i * 4 + 2]]); }
+    for (let y = 1; y < n - 1; y++) for (let x = 1; x < n - 1; x++) { const i = y * n + x; A[i] = Math.atan2(g[i + n] - g[i - n], g[i + 1] - g[i - 1]) + 1.5708; }
+  });
+  const stroke = (px, py, S, ix, iy, w, len) => {
+    const gx = Math.min(n - 1, Math.max(0, (px - ix) / S * n | 0)), gy = Math.min(n - 1, Math.max(0, (py - iy) / S * n | 0)), i = gy * n + gx, c = C[i], j = 1 + (Math.random() - 0.5) * 0.2, a = A[i] + (Math.random() - 0.5) * 0.3, dx = Math.cos(a) * len / 2, dy = Math.sin(a) * len / 2;
+    ctx.strokeStyle = `rgb(${c[0] * j | 0},${c[1] * j | 0},${c[2] * j | 0})`; ctx.lineWidth = w; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(px - dx, py - dy); ctx.lineTo(px + dx, py + dy); ctx.stroke();
+  };
+  loop(t => {
+    const { W, H } = o; if (!C) return;
+    const S = Math.min(W, H) * 0.9, ix = (W - S) / 2, iy = (H - S) / 2, k = Math.max(0.5, S / 600);
+    if (lw !== W || lh !== H) { lw = W; lh = H; layer = 0; cnt = 0; fade = 0; ctx.fillStyle = '#14110d'; ctx.fillRect(0, 0, W, H); }
+    if (layer < 3) {
+      const [w, len, tot, rate] = LY[layer];
+      for (let i = 0; i < rate && cnt < tot; i++, cnt++) stroke(ix + Math.random() * S, iy + Math.random() * S, S, ix, iy, w * k, len * k);
+      if (cnt >= tot) { layer++; cnt = 0; hold = t + 3500; }
+    } else if (t > hold) {
+      ctx.fillStyle = 'rgba(20,17,13,0.12)'; ctx.fillRect(0, 0, W, H);
+      if (++fade > 40) { layer = 0; fade = 0; ctx.fillStyle = '#14110d'; ctx.fillRect(0, 0, W, H); }
+    }
+    if (m.on) for (let i = 0; i < 4; i++) stroke(m.x + (Math.random() - 0.5) * 50, m.y + (Math.random() - 0.5) * 50, S, ix, iy, 4 * k, 10 * k);
+  });
+}
+
+const effects = [effectBounce, effectParticles, effectRipple, effectTilt, effectMosaic, effectMagnifier, effectKaleidoscope, effectFrost, effectOrbit, effectPixelate, effectGlitch, effectAscii, effectHalftone, effectWarp, effectSwirl, effectSpotlight, effectShatter, effectCrt, effectWave, effectCube, effectGravity, effectSnow, effectTrail, effectTunnel, effectHologram, effectBlackHole, effectGlobe, effectMatrix, effectLiquid, effectNeon, effectSynthwave, effectReflection, effectPopArt, effectThermal, effectPrism, effectFireworks, effectGlass, effectBubbles, effectCity, effectFilm, effectCarousel, effectNightVision, effectPixelSort, effectPuzzle, effectPainter];
+const names = ['bounce','particles','ripple','tilt','mosaic','magnifier','kaleidoscope','frost','orbit','pixelate','glitch','ascii','halftone','warp','swirl','spotlight','shatter','CRT','wave','cube','gravity','snow globe','trail','tunnel','hologram','black hole','globe','matrix','liquid','neon','synthwave','reflection','pop art','thermal','prism','fireworks','stained glass','bubbles','city','film','carousel','night vision','pixel sort','sliding puzzle','painter'];
 const want = parseInt(location.hash.slice(1), 10) - 1;
 const pick = want >= 0 && want < effects.length ? want : Math.floor(Math.random() * effects.length);
 effects[pick](stage);
