@@ -1046,7 +1046,7 @@ function effectSynthwave(root) {
     ctx.fillStyle = sky;
     for (let k = 0; k < 8; k++) { const y = cy + R * 0.05 + (k + ph / 1600 % 1) * R * 0.14; ctx.fillRect(cx - R, y, R * 2, 1 + (y - cy) * 0.07); }
     ctx.fillStyle = '#1a0536'; ctx.beginPath(); ctx.moveTo(0, hz);
-    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, hz - (Math.abs(Math.sin(x / W * 7 + vx * 3)) * 0.6 + Math.sin(x / W * 19 + 1) * 0.2 + 0.2) * H * 0.09);
+    for (let x = 0; x <= W; x += 8) ctx.lineTo(x, hz - (Math.abs(Math.sin(x / W * 7 + vx * 3)) * 0.6 + Math.sin(x / W * 19 + 1) * 0.2 + 0.2) * Math.min(H * 0.09, R * 0.4));
     ctx.lineTo(W, hz); ctx.fill(); ctx.restore();
     const fl = ctx.createLinearGradient(0, hz, 0, H); fl.addColorStop(0, '#2a0850'); fl.addColorStop(1, '#0d0221');
     ctx.fillStyle = fl; ctx.fillRect(0, hz, W, H - hz);
@@ -1487,8 +1487,159 @@ function effectPainter(root) {
   });
 }
 
-const effects = [effectBounce, effectParticles, effectRipple, effectTilt, effectMosaic, effectMagnifier, effectKaleidoscope, effectFrost, effectOrbit, effectPixelate, effectGlitch, effectAscii, effectHalftone, effectWarp, effectSwirl, effectSpotlight, effectShatter, effectCrt, effectWave, effectCube, effectGravity, effectSnow, effectTrail, effectTunnel, effectHologram, effectBlackHole, effectGlobe, effectMatrix, effectLiquid, effectNeon, effectSynthwave, effectReflection, effectPopArt, effectThermal, effectPrism, effectFireworks, effectGlass, effectBubbles, effectCity, effectFilm, effectCarousel, effectNightVision, effectPixelSort, effectPuzzle, effectPainter];
-const names = ['bounce','particles','ripple','tilt','mosaic','magnifier','kaleidoscope','frost','orbit','pixelate','glitch','ascii','halftone','warp','swirl','spotlight','shatter','CRT','wave','cube','gravity','snow globe','trail','tunnel','hologram','black hole','globe','matrix','liquid','neon','synthwave','reflection','pop art','thermal','prism','fireworks','stained glass','bubbles','city','film','carousel','night vision','pixel sort','sliding puzzle','painter'];
+function effectFlag(root) {
+  const o = mkCanvas(root), m = track(root), ctx = o.ctx, ST = 70;
+  let src = null, amp = 1, ph = 0;
+  withImg(s => { src = s; });
+  loop(() => {
+    const { W, H } = o, sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#6aa6d8'); sky.addColorStop(1, '#d9ecf7'); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    if (!src) return;
+    const S = Math.min(W * 0.78, H * 0.62), x0 = (W - S) / 2, y0 = (H - S) / 2 + S * 0.05;
+    amp += ((m.on ? 0.5 + m.x / W : 1) * (m.down ? 1.8 : 1) - amp) * 0.05; ph += 0.05 * amp;
+    ctx.fillStyle = '#8a8f99'; ctx.fillRect(x0 - 9, y0 - S * 0.1, 9, H); ctx.fillStyle = '#d9b44a'; circle(ctx, x0 - 4.5, y0 - S * 0.1, 8); ctx.fill();
+    for (let i = 0; i < ST; i++) {
+      const u = i / ST, a = u * 7 - ph, off = Math.sin(a) * S * 0.05 * amp * u, sh = Math.cos(a) * 0.3 * Math.min(1.5, amp) * u, hh = S * (1 + Math.sin(a * 0.7 + 1) * 0.02 * u * amp), x = x0 + u * S;
+      ctx.drawImage(src, u * 512, 0, 512 / ST + 1, 512, x, y0 + off, S / ST + 1, hh);
+      ctx.fillStyle = sh > 0 ? `rgba(255,255,255,${sh})` : `rgba(0,0,40,${-sh})`; ctx.fillRect(x, y0 + off, S / ST + 1, hh);
+    }
+  });
+}
+
+function effectLed(root) {
+  root.style.background = '#050506';
+  const o = mkCanvas(root), m = track(root), ctx = o.ctx, CO = 64, RI = 64, RT = 9, RW = RI + 2 + RT;
+  let C = null, off = 0;
+  const tc = document.createElement('canvas'), tx = tc.getContext('2d'), txt = '  charlie.cx  ';
+  tx.font = 'bold 9px monospace'; const TW = Math.ceil(tx.measureText(txt).width); tc.width = TW; tc.height = RT;
+  tx.font = 'bold 9px monospace'; tx.fillStyle = '#fff'; tx.textBaseline = 'middle'; tx.fillText(txt, 0, RT / 2 + 0.5);
+  const tp = tx.getImageData(0, 0, TW, RT).data;
+  withImg(s => { C = sampleImg(s, CO).d; });
+  loop(t => {
+    const { W, H } = o; ctx.fillStyle = '#050506'; ctx.fillRect(0, 0, W, H);
+    if (!C) return;
+    const p = Math.min(W / CO, H / RW) * 0.96, x0 = (W - p * CO) / 2, y0 = (H - p * RW) / 2, mc = (m.x - x0) / p, mr = (m.y - y0) / p, glow = p >= 5;
+    off += 0.15;
+    for (let r = 0; r < RW; r++) for (let c = 0; c < CO; c++) {
+      let R, G, B, b;
+      if (r < RI) { const k = (r * CO + c) * 4; R = C[k]; G = C[k + 1]; B = C[k + 2]; b = 0.8 + 0.3 * Math.sin(c * 0.12 - r * 0.05 - t / 500); }
+      else if (r >= RI + 2) { const on = tp[((r - RI - 2) * TW + ((c + (off | 0)) % TW)) * 4 + 3] > 120; R = 255; G = 170; B = 40; b = on ? 1 : 0.08; }
+      else continue;
+      if (m.on) { const f = Math.max(0, 1 - Math.hypot(c - mc, r - mr) / (m.down ? 10 : 5)); R += (255 - R) * f; G += (255 - G) * f; B += (255 - B) * f; b += f * 0.5; }
+      const x = x0 + (c + 0.5) * p, y = y0 + (r + 0.5) * p;
+      ctx.fillStyle = `rgb(${Math.min(255, R * b) | 0},${Math.min(255, G * b) | 0},${Math.min(255, B * b) | 0})`; circle(ctx, x, y, p * 0.4); ctx.fill();
+    }
+    if (glow) {
+      ctx.globalCompositeOperation = 'lighter';
+      for (let r = 0; r < RI; r += 2) for (let c = 0; c < CO; c += 2) { const k = (r * CO + c) * 4; ctx.fillStyle = `rgba(${C[k]},${C[k + 1]},${C[k + 2]},0.12)`; circle(ctx, x0 + (c + 1) * p, y0 + (r + 1) * p, p * 1.4); ctx.fill(); }
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  });
+}
+
+function effectPlasma(root) {
+  root.style.background = '#020207';
+  const o = mkCanvas(root), m = track(root), ctx = o.ctx;
+  let src = null;
+  withImg(s => { src = s; });
+  const jag = (ax, ay, bx, by, off, pts) => {
+    if (off < 3) { pts.push([bx, by]); return; }
+    const mx = (ax + bx) / 2 + (Math.random() - 0.5) * off, my = (ay + by) / 2 + (Math.random() - 0.5) * off;
+    jag(ax, ay, mx, my, off / 2, pts); jag(mx, my, bx, by, off / 2, pts);
+  };
+  loop(t => {
+    const { W, H } = o, R = Math.min(W, H) * 0.42, cx = W / 2, cy = H / 2 - R * 0.05, cr = R * 0.2;
+    ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = 'rgba(2,2,7,0.4)'; ctx.fillRect(0, 0, W, H);
+    const gl = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.3, R * 0.1, cx, cy, R);
+    gl.addColorStop(0, 'rgba(60,40,120,0.25)'); gl.addColorStop(1, 'rgba(10,6,30,0.5)'); ctx.fillStyle = gl; circle(ctx, cx, cy, R); ctx.fill();
+    ctx.globalCompositeOperation = 'lighter'; ctx.lineJoin = 'round';
+    const n = 7 + (m.down ? 7 : 0), pd = m.on ? Math.hypot(m.x - cx, m.y - cy) : 1e9;
+    for (let i = 0; i < n; i++) {
+      let tx, ty;
+      if (m.on && pd < R * 1.25 && Math.random() < 0.55) { const k = Math.min(1, R * 0.97 / pd); tx = cx + (m.x - cx) * k; ty = cy + (m.y - cy) * k; }
+      else { const a = Math.random() * 6.283; tx = cx + Math.cos(a) * R * 0.97; ty = cy + Math.sin(a) * R * 0.97; }
+      const pts = [[cx, cy]]; jag(cx, cy, tx, ty, R * 0.45, pts);
+      for (const [w, col] of [[7, 'rgba(120,60,255,0.12)'], [3, 'rgba(170,120,255,0.4)'], [1.2, 'rgba(255,255,255,0.95)']]) {
+        ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); pts.forEach((q, j) => j ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.stroke();
+      }
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    if (src) { ctx.save(); circle(ctx, cx, cy, cr); ctx.clip(); ctx.drawImage(src, cx - cr, cy - cr, cr * 2, cr * 2); ctx.restore(); }
+    const cg = ctx.createRadialGradient(cx, cy, cr * 0.9, cx, cy, cr * 2); cg.addColorStop(0, 'rgba(190,150,255,0.5)'); cg.addColorStop(1, 'rgba(190,150,255,0)');
+    ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = cg; circle(ctx, cx, cy, cr * 2); ctx.fill(); ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = 'rgba(170,170,255,0.35)'; ctx.lineWidth = 2; circle(ctx, cx, cy, R); ctx.stroke();
+    ctx.fillStyle = '#1a1a26'; ctx.beginPath(); ctx.moveTo(cx - R * 0.3, cy + R * 1.05); ctx.lineTo(cx + R * 0.3, cy + R * 1.05); ctx.lineTo(cx + R * 0.45, cy + R * 1.22); ctx.lineTo(cx - R * 0.45, cy + R * 1.22); ctx.fill();
+  });
+}
+
+function effectLayers(root) {
+  root.style.background = 'radial-gradient(circle at 50% 40%,#2a2f3f 0%,#0b0c10 75%)';
+  const o = mkCanvas(root), m = track(root), ctx = o.ctx;
+  let L = null, base = null, px = 0, py = 0;
+  withImg(s => {
+    const d = sampleImg(s, 512).d, band = i => { const l = lum(d, i * 4); return l < 0.2 ? 3 : l < 0.5 ? 2 : l < 0.7 ? 1 : 0; };
+    let r = 0, g = 0, b = 0, nn = 0;
+    for (let i = 0; i < 512 * 512; i++) if (!band(i)) { r += d[i * 4]; g += d[i * 4 + 1]; b += d[i * 4 + 2]; nn++; }
+    const mk = () => { const c = document.createElement('canvas'); c.width = c.height = 512; const x = c.getContext('2d'); return [c, x, x.createImageData(512, 512)]; };
+    const bs = mk(); L = [1, 2, 3].map(() => mk());
+    for (let i = 0; i < 512 * 512; i++) {
+      const k = band(i), t = k ? L[k - 1][2] : bs[2];
+      for (let j = 0; j < 3; j++) t.data[i * 4 + j] = d[i * 4 + j]; t.data[i * 4 + 3] = 255;
+      if (k) { bs[2].data[i * 4] = r / nn; bs[2].data[i * 4 + 1] = g / nn; bs[2].data[i * 4 + 2] = b / nn; bs[2].data[i * 4 + 3] = 255; }
+    }
+    bs[1].putImageData(bs[2], 0, 0); L.forEach(q => q[1].putImageData(q[2], 0, 0));
+    base = bs[0]; L = L.map(q => q[0]);
+  });
+  loop(t => {
+    const { W, H } = o; ctx.clearRect(0, 0, W, H);
+    if (!L) return;
+    const S = Math.min(W, H) * 0.8, x0 = (W - S) / 2, y0 = (H - S) / 2;
+    px += ((m.on ? (m.x / W - 0.5) * 2 : Math.sin(t / 1500) * 0.8) - px) * 0.08; py += ((m.on ? (m.y / H - 0.5) * 2 : Math.cos(t / 1900) * 0.5) - py) * 0.08;
+    ctx.drawImage(base, x0, y0, S, S);
+    L.forEach((c, i) => {
+      const dp = [0.35, 0.7, 1.15][i] * S * 0.09 * (m.down ? 2 : 1), dx = -px * dp, dy = -py * dp;
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 12 + i * 6; ctx.shadowOffsetX = -dx * 0.6; ctx.shadowOffsetY = -dy * 0.6 + 4;
+      ctx.drawImage(c, x0 + dx, y0 + dy, S, S); ctx.restore();
+    });
+  });
+}
+
+function effectDisco(root) {
+  root.style.background = 'radial-gradient(circle at 50% 30%,#1c1230 0%,#050408 75%)';
+  const o = mkCanvas(root), m = track(root), ctx = o.ctx, LA = 20, LO = 40, T = [];
+  let d = null, yaw = 0, tilt = 0.25, sp = 0.012;
+  withImg(s => { d = sampleImg(s, 128).d; });
+  for (let i = 0; i < LA; i++) for (let j = 0; j < LO; j++) T.push({ i, j, b: 0.7 + Math.random() * 0.4, sp: Math.random() * 50 });
+  const pt = (la, lo) => [Math.cos(la) * Math.sin(lo), Math.sin(la), Math.cos(la) * Math.cos(lo)];
+  loop(t => {
+    const { W, H } = o, R = Math.min(W, H) * 0.34, cx = W / 2, cy = H * 0.5;
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    for (let k = 0; k < 8; k++) {
+      const a = t / 3000 * (k % 2 ? 1 : -1) + k * 0.8, x = cx + Math.cos(a) * W * 0.42, y = cy + Math.sin(a * 1.3) * H * 0.38, g = ctx.createRadialGradient(x, y, 0, x, y, R * 0.45);
+      g.addColorStop(0, `hsla(${(k * 45 + t / 30) % 360},100%,60%,0.3)`); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(x - R, y - R, R * 2, R * 2);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    if (!d) return;
+    ctx.fillStyle = '#666'; ctx.fillRect(cx - 2, 0, 4, cy - R);
+    sp += ((m.on ? (m.x / W - 0.5) * 0.08 : 0.012) - sp) * 0.05; yaw += sp; tilt += ((m.on ? (m.y / H - 0.5) * 0.6 : 0.25) - tilt) * 0.05;
+    const cy_ = Math.cos(yaw), sy = Math.sin(yaw), ct = Math.cos(tilt), st = Math.sin(tilt);
+    ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 0.6;
+    for (const tl of T) {
+      const la0 = -1.5708 + tl.i * 3.1416 / LA, la1 = la0 + 3.1416 / LA, lo0 = tl.j * 6.2832 / LO, lo1 = lo0 + 6.2832 / LO;
+      const P = [pt(la0, lo0), pt(la0, lo1), pt(la1, lo1), pt(la1, lo0)].map(([x, y, z]) => { const x1 = x * cy_ + z * sy, z1 = z * cy_ - x * sy; return [x1, y * ct - z1 * st, y * st + z1 * ct]; });
+      let nx = 0, ny = 0, nz = 0; for (const q of P) { nx += q[0]; ny += q[1]; nz += q[2]; }
+      const nl = Math.hypot(nx, ny, nz); nx /= nl; ny /= nl; nz /= nl;
+      if (nz < 0.05) continue;
+      const k = (((0.5 - ny * 0.45) * 127 | 0) * 128 + ((0.5 + nx * 0.45) * 127 | 0)) * 4, br = tl.b * (0.45 + 0.55 * nz) + Math.pow(Math.max(0, Math.sin(t / 200 + tl.sp)), 40) * 0.9;
+      ctx.fillStyle = `rgb(${Math.min(255, d[k] * br) | 0},${Math.min(255, d[k + 1] * br) | 0},${Math.min(255, d[k + 2] * br) | 0})`;
+      ctx.beginPath(); P.forEach((q, j) => j ? ctx.lineTo(cx + q[0] * R, cy - q[1] * R) : ctx.moveTo(cx + q[0] * R, cy - q[1] * R)); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+  });
+}
+
+const effects = [effectBounce, effectParticles, effectRipple, effectTilt, effectMosaic, effectMagnifier, effectKaleidoscope, effectFrost, effectOrbit, effectPixelate, effectGlitch, effectAscii, effectHalftone, effectWarp, effectSwirl, effectSpotlight, effectShatter, effectCrt, effectWave, effectCube, effectGravity, effectSnow, effectTrail, effectTunnel, effectHologram, effectBlackHole, effectGlobe, effectMatrix, effectLiquid, effectNeon, effectSynthwave, effectReflection, effectPopArt, effectThermal, effectPrism, effectFireworks, effectGlass, effectBubbles, effectCity, effectFilm, effectCarousel, effectNightVision, effectPixelSort, effectPuzzle, effectPainter, effectFlag, effectLed, effectPlasma, effectLayers, effectDisco];
+const names = ['bounce','particles','ripple','tilt','mosaic','magnifier','kaleidoscope','frost','orbit','pixelate','glitch','ascii','halftone','warp','swirl','spotlight','shatter','CRT','wave','cube','gravity','snow globe','trail','tunnel','hologram','black hole','globe','matrix','liquid','neon','synthwave','reflection','pop art','thermal','prism','fireworks','stained glass','bubbles','city','film','carousel','night vision','pixel sort','sliding puzzle','painter','flag','LED board','plasma ball','paper layers','mirror ball'];
 const want = parseInt(location.hash.slice(1), 10) - 1;
 const pick = want >= 0 && want < effects.length ? want : Math.floor(Math.random() * effects.length);
 effects[pick](stage);
