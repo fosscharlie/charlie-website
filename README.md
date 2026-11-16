@@ -1,8 +1,9 @@
-<p align="center"><img src="docs/images/banner.png" alt="charlie.cx: a one-page personal site where an avatar reacts to your mouse" width="100%"></p>
+<p align="center"><img src="docs/images/banner-site.png" alt="charlie.cx: a one-page personal site where an avatar reacts to your mouse" width="100%"></p>
 
 <p align="center">
 <img alt="Licence: GPL-3.0-or-later" src="https://img.shields.io/badge/licence-GPL--3.0--or--later-2b2f38?style=flat-square&labelColor=15171c">
 <img alt="Hosted on GitHub Pages" src="https://img.shields.io/badge/hosted-GitHub%20Pages-2b2f38?style=flat-square&labelColor=15171c">
+<img alt="Effects: 50" src="https://img.shields.io/badge/effects-50-f2c94c?style=flat-square&labelColor=15171c">
 <img alt="External requests: none" src="https://img.shields.io/badge/external%20requests-none-2b2f38?style=flat-square&labelColor=15171c">
 </p>
 
@@ -16,7 +17,7 @@ The whole site is one HTML file. It has no cookies, no analytics and no outside 
 
 <p align="center"><img src="docs/images/how-it-works.png" alt="Three steps: open the page, an effect is picked at random, play with it" width="100%"></p>
 
-Each visit picks one effect at random. Press Next or reload the page for a different one.
+Each visit picks one of 50 effects at random. Press Next or reload the page for a different one.
 
 ## The effects
 
@@ -41,7 +42,7 @@ Most effects react to the mouse or a finger. Some also respond to a click or to 
 
 ## Settings
 
-There are none. The site stores nothing. The address can end in a number to pick an effect, for example `charlie.cx/#11`.
+There are none. The site stores nothing. The address can end in a number from 1 to 50 to pick an effect, for example `charlie.cx/#11`.
 
 ## Where your data lives
 
